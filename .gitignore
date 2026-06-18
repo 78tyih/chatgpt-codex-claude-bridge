@@ -1,0 +1,20 @@
+# Secrets — NEVER commit
+.env
+*.pem
+*.key
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local runtime state / logs
+state/
+*.log
+.omx/
