@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>ChatGPT × Codex × Claude Bridge — 隔空指挥本地 AI · 交互展示</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F7F8FA; --panel:#FFFFFF; --ink:#16181D; --ink2:#565B66; --ink3:#8E93A0;
+  --hairline:rgba(22,24,29,.13); --accent:#4F8CFF; --accent-soft:rgba(79,140,255,.08);
+  --warn:#D64545; --warn-soft:rgba(214,69,69,.06);
+  --mono:"JetBrains Mono",ui-monospace,monospace; --font-body:"Inter","Noto Sans SC",system-ui,sans-serif;
+}
+html[data-theme="dark"]{
+  --paper:#121317; --panel:#1A1C22; --ink:#E7E9EE; --ink2:#A9AEBB; --ink3:#686D7A;
+  --hairline:rgba(231,233,238,.14); --accent:#4F8CFF; --accent-soft:rgba(79,140,255,.1);
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font-family:var(--font-body);margin:0;line-height:1.65;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 34px}
+.en{display:none} html[data-lang="en"] .en{display:inline} html[data-lang="en"] .zh{display:none}
+header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--hairline)}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:15px 34px;max-width:1080px;margin:0 auto}
+.logo{font-family:var(--mono);font-size:14px;font-weight:500;text-decoration:none;color:var(--ink)}
+.logo b{color:var(--accent)}
+.hd-right{display:flex;gap:8px}
+.tgl{border:1px solid var(--hairline);background:transparent;color:var(--ink2);padding:5px 13px;font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font-body)}
+.tgl:hover{color:var(--ink);border-color:var(--ink3)} .tgl.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.hero{padding:80px 0 56px;border-bottom:1px solid var(--hairline)}
+.kicker{display:flex;align-items:center;gap:14px;font-size:11px;font-weight:500;letter-spacing:.28em;text-transform:uppercase;color:var(--ink2);font-family:var(--mono)}
+.kicker::before{content:"";width:34px;height:1px;background:var(--ink3)}
+h1{font-size:clamp(2.1rem,4.4vw,3.2rem);line-height:1.14;letter-spacing:-.01em;font-weight:600;margin:22px 0 0;max-width:24ch}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{max-width:62ch;color:var(--ink2);font-size:15px;margin:18px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:0;margin-top:24px}
+.chip{border:1px solid var(--hairline);padding:7px 15px;font-size:11.5px;color:var(--ink2);background:var(--panel);font-family:var(--mono);letter-spacing:.06em}
+.chip+.chip{border-left:0} .chip b{color:var(--accent);font-weight:500}
+.cta{display:flex;gap:0;margin-top:28px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:13px;font-weight:500;text-decoration:none;border:1px solid var(--ink);background:transparent;color:var(--ink);transition:all .15s ease}
+.btn--accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn+.btn{border-left:0}
+.btn:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+section{padding:60px 0;border-bottom:1px solid var(--hairline)}
+.sec-no{font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--accent);text-transform:uppercase}
+h2{font-size:clamp(1.5rem,2.8vw,2.1rem);font-weight:600;margin:8px 0 0;letter-spacing:-.01em}
+h2 em{font-style:normal;color:var(--accent)}
+.sec-sub{color:var(--ink2);font-size:14px;margin-top:10px;max-width:66ch}
+/* flow diagram */
+.flow{border:1px solid var(--hairline);background:var(--panel);padding:26px 18px;overflow-x:auto}
+.flow svg{display:block;margin:0 auto;min-width:640px}
+/* tables */
+.tbl{border:1px solid var(--hairline);background:var(--panel);width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);text-align:left;padding:12px 18px;border-bottom:1px solid var(--hairline);font-weight:500}
+.tbl td{padding:13px 18px;border-bottom:1px solid var(--hairline);color:var(--ink2);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td b{color:var(--ink);font-weight:500}
+.tbl code{font-family:var(--mono);font-size:12px;background:var(--accent-soft);padding:2px 7px;color:var(--ink)}
+/* security */
+.secbox{border:1.5px solid var(--warn);background:var(--warn-soft);padding:24px 26px}
+.secbox b.hl{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--warn);margin-bottom:12px}
+.secbox p{margin:0 0 10px;font-size:14px;color:var(--ink2)}
+.secbox ul{margin:10px 0 0;padding-left:20px;font-size:13.5px;color:var(--ink2)}
+.secbox li{margin-bottom:8px}
+.secbox li b{color:var(--ink);font-weight:500}
+/* steps */
+.steps{border:1px solid var(--hairline);background:var(--panel)}
+.step{padding:16px 22px;border-bottom:1px solid var(--hairline);display:grid;grid-template-columns:44px 1fr;gap:16px;align-items:baseline}
+.step:last-child{border-bottom:0}
+.step i{font-family:var(--mono);font-style:normal;font-size:11px;color:var(--accent);letter-spacing:.14em}
+.step p{margin:0;font-size:13.5px;color:var(--ink2)}
+.step code{font-family:var(--mono);font-size:12px;background:var(--accent-soft);padding:1px 7px;color:var(--ink)}
+/* faq */
+.faq{border:1px solid var(--hairline);background:var(--panel)}
+details.faq-item{border-bottom:1px solid var(--hairline)}
+details.faq-item:last-child{border-bottom:0}
+details.faq-item summary{cursor:pointer;list-style:none;display:flex;gap:16px;align-items:baseline;padding:17px 20px}
+details.faq-item summary::-webkit-details-marker{display:none}
+details.faq-item summary:hover .qt{color:var(--accent)}
+details.faq-item summary .qm{font-family:var(--mono);color:var(--accent);font-size:10.5px;letter-spacing:.22em;min-width:52px;text-transform:uppercase}
+details.faq-item summary .qt{flex:1;font-size:15.5px;font-weight:500}
+details.faq-item summary .qc{color:var(--ink3);font-family:var(--mono);font-size:13px;transition:transform .15s ease}
+details.faq-item[open] summary .qc{transform:rotate(45deg)}
+details.faq-item .qa{padding:0 20px 20px 88px;color:var(--ink2);font-size:14px;line-height:1.75}
+details.faq-item .qa b{color:var(--ink)}
+@media(max-width:700px){details.faq-item .qa{padding-left:20px}}
+footer{padding:40px 0 56px;color:var(--ink3);font-size:12px}
+.fm{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<header><div class="hd">
+  <a class="logo" href="#">ChatGPT <b>×</b> Codex <b>×</b> Claude Bridge</a>
+  <div class="hd-right">
+    <button class="tgl on" id="lang-zh" onclick="setLang('zh')">中</button>
+    <button class="tgl" id="lang-en" onclick="setLang('en')">EN</button>
+    <button class="tgl on" id="th-light" onclick="setTheme('light')">☀︎</button>
+    <button class="tgl" id="th-dark" onclick="setTheme('dark')">☾</button>
+  </div>
+</div></header>
+
+<div class="wrap">
+<section class="hero">
+  <div class="kicker">MCP BRIDGE · CLOUDFLARE TUNNEL <span style="color:var(--ink3)">·</span> CAPABILITY-URL AUTH</div>
+  <h1><span class="zh">网页版 ChatGPT <em>隔空指挥</em>你电脑上的 Codex 和 Claude Code</span><span class="en">Web ChatGPT remote-controls local Codex & Claude Code</span></h1>
+  <p class="sub"><span class="zh">ChatGPT 负责想，你的电脑负责动手。以前你得人肉中转：ChatGPT 里问完方案、复制、粘到终端。这座桥把中转自动化——派活、执行、审查、回传，全程只在 ChatGPT 里打字。</span>
+  <span class="en">ChatGPT plans, your machine executes. No more copy-pasting between tabs — dispatch, execution, review and results flow back automatically over one encrypted tunnel.</span></p>
+  <div class="chips">
+    <span class="chip"><b>3</b> <span class="zh">角色协作</span><span class="en">roles</span></span>
+    <span class="chip"><b>5</b> <span class="zh">个 MCP 工具</span><span class="en">MCP tools</span></span>
+    <span class="chip">FastMCP</span>
+    <span class="chip">Cloudflare Tunnel</span>
+    <span class="chip">MIT</span>
+  </div>
+  <div class="cta">
+    <a class="btn btn--accent" href="#flow"><span class="zh">看数据怎么流 ↓</span><span class="en">See the data flow ↓</span></a>
+    <a class="btn" href="https://github.com/78tyih/chatgpt-codex-claude-bridge">GitHub</a>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="sec-no">01 · DATA FLOW</div>
+  <h2><span class="zh">数据怎么流：<em>一个小团队</em></span><span class="en">The data flow — a tiny team</span></h2>
+  <p class="sec-sub"><span class="zh">ChatGPT = 项目经理（想方案、派活）｜Claude Code = 干活的工程师｜Codex = 审查的同事。蓝色向下游派活，绿色原路回传结果。</span>
+  <span class="en">ChatGPT = PM (plans, dispatches) · Claude Code = engineer (executes) · Codex = reviewer. Blue flows downstream, green flows back.</span></p>
+  <div class="flow" style="margin-top:22px">
+  <svg viewBox="0 0 900 330" width="900" height="330" xmlns="http://www.w3.org/2000/svg" font-family="Inter,'Noto Sans SC',sans-serif">
+    <defs>
+      <marker id="ab" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4F8CFF"/></marker>
+      <marker id="ag" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#3E9C6B"/></marker>
+    </defs>
+    <!-- you -->
+    <rect x="20" y="130" width="120" height="64" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--ink3)"/>
+    <text x="80" y="157" text-anchor="middle" font-size="13" font-weight="500" fill="var(--ink)" style="fill:var(--ink)">你</text>
+    <text x="80" y="177" text-anchor="middle" font-size="10" fill="var(--ink3)" style="fill:var(--ink3)">只打一行字</text>
+    <!-- chatgpt -->
+    <rect x="190" y="118" width="170" height="88" fill="var(--accent-soft)" style="fill:var(--accent-soft)" stroke="#4F8CFF" stroke-width="1.2"/>
+    <text x="275" y="150" text-anchor="middle" font-size="14" font-weight="600" fill="#4F8CFF">ChatGPT（云端）</text>
+    <text x="275" y="172" text-anchor="middle" font-size="10.5" fill="var(--ink2)" style="fill:var(--ink2)">负责「想」：规划 · 拆需求 · 派活</text>
+    <text x="275" y="190" text-anchor="middle" font-size="10.5" fill="var(--ink2)" style="fill:var(--ink2)">开发者模式 → MCP connector</text>
+    <line x1="140" y1="162" x2="186" y2="162" stroke="#4F8CFF" stroke-width="1.4" marker-end="url(#ab)"/>
+    <!-- tunnel -->
+    <rect x="410" y="118" width="150" height="88" fill="none" stroke="var(--ink3)" stroke-dasharray="4 3" style="stroke:var(--ink3)"/>
+    <text x="485" y="148" text-anchor="middle" font-size="12" font-weight="500" fill="var(--ink)" style="fill:var(--ink)">Cloudflare Tunnel</text>
+    <text x="485" y="168" text-anchor="middle" font-size="10" fill="var(--ink3)" style="fill:var(--ink3)">HTTPS · http2</text>
+    <text x="485" y="186" text-anchor="middle" font-size="10" font-family="JetBrains Mono" fill="var(--ink3)" style="fill:var(--ink3)">/mcp/&lt;hex密钥&gt;</text>
+    <line x1="360" y1="162" x2="406" y2="162" stroke="#4F8CFF" stroke-width="1.4" marker-end="url(#ab)"/>
+    <!-- bridge -->
+    <rect x="610" y="118" width="160" height="88" fill="var(--accent-soft)" style="fill:var(--accent-soft)" stroke="#4F8CFF" stroke-width="1.2"/>
+    <text x="690" y="146" text-anchor="middle" font-size="13" font-weight="600" fill="#4F8CFF">MCP 桥（你的电脑）</text>
+    <text x="690" y="166" text-anchor="middle" font-size="10.5" fill="var(--ink2)" style="fill:var(--ink2)">app/bridge_server.py · FastMCP</text>
+    <text x="690" y="184" text-anchor="middle" font-size="10.5" fill="var(--ink2)" style="fill:var(--ink2)">分派任务 · 一套代码 stdio/--http 两用</text>
+    <line x1="560" y1="162" x2="606" y2="162" stroke="#4F8CFF" stroke-width="1.4" marker-end="url(#ab)"/>
+    <!-- executors -->
+    <rect x="560" y="252" width="160" height="58" fill="none" stroke="var(--ink3)" style="stroke:var(--ink3)"/>
+    <text x="640" y="276" text-anchor="middle" font-size="12" font-weight="500" fill="var(--ink)" style="fill:var(--ink)">Claude Code</text>
+    <text x="640" y="295" text-anchor="middle" font-size="10" fill="var(--ink3)" style="fill:var(--ink3)">真改文件 · 真跑命令</text>
+    <rect x="740" y="252" width="140" height="58" fill="none" stroke="var(--ink3)" style="stroke:var(--ink3)"/>
+    <text x="810" y="276" text-anchor="middle" font-size="12" font-weight="500" fill="var(--ink)" style="fill:var(--ink)">Codex</text>
+    <text x="810" y="295" text-anchor="middle" font-size="10" fill="var(--ink3)" style="fill:var(--ink3)">执行 · 代码审查</text>
+    <line x1="660" y1="206" x2="640" y2="248" stroke="#4F8CFF" stroke-width="1.4" marker-end="url(#ab)"/>
+    <line x1="720" y1="206" x2="805" y2="248" stroke="#4F8CFF" stroke-width="1.4" marker-end="url(#ab)"/>
+    <!-- return path -->
+    <path d="M 810 248 C 870 200 760 60 500 52 C 300 46 240 90 275 114" fill="none" stroke="#3E9C6B" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ag)"/>
+    <text x="520" y="42" text-anchor="middle" font-size="10.5" fill="#3E9C6B">结果原路返回 · 显示在 ChatGPT 对话里</text>
+  </svg>
+  </div>
+</section>
+
+<section id="roles">
+  <div class="sec-no">02 · ROLES & TOOLS</div>
+  <h2><span class="zh">三个角色，<em>五个工具</em></span><span class="en">Three roles, five tools</span></h2>
+  <div style="margin-top:22px">
+  <table class="tbl">
+    <tr><th style="width:26%">AI</th><th style="width:37%"><span class="zh">强项</span><span class="en">Strength</span></th><th><span class="zh">短板</span><span class="en">Limitation</span></th></tr>
+    <tr><td><b>ChatGPT（网页版）</b></td><td><span class="zh">规划、调研、拆需求</span><span class="en">Planning, research, task decomposition</span></td><td><span class="zh">在云端，碰不到你的电脑</span><span class="en">Cloud-only — can't touch your machine</span></td></tr>
+    <tr><td><b>Claude Code（本地）</b></td><td><span class="zh">真改文件、真跑命令、执行落地</span><span class="en">Real file edits, real commands</span></td><td><span class="zh">规划不如 ChatGPT</span><span class="en">Weaker at planning</span></td></tr>
+    <tr><td><b>Codex（本地）</b></td><td><span class="zh">真改文件、真跑命令、代码审查</span><span class="en">Real edits, commands, code review</span></td><td><span class="zh">规划不如 ChatGPT</span><span class="en">Weaker at planning</span></td></tr>
+  </table>
+  </div>
+  <div style="margin-top:18px">
+  <table class="tbl">
+    <tr><th style="width:26%">MCP <span class="zh">工具</span><span class="en">tool</span></th><th><span class="zh">作用</span><span class="en">Purpose</span></th></tr>
+    <tr><td><code>run_codex</code></td><td><span class="zh">把任务交给本地 Codex 跑（执行 / 审查）</span><span class="en">Dispatch a task to local Codex (execute / review)</span></td></tr>
+    <tr><td><code>run_claude_code</code></td><td><span class="zh">把任务交给本地 Claude Code 跑（执行落地）</span><span class="en">Dispatch a task to local Claude Code</span></td></tr>
+    <tr><td><code>read_file</code> / <code>write_file</code></td><td><span class="zh">读写 <code>BRIDGE_WORK_ROOT</code> 内的文件</span><span class="en">Read/write files inside BRIDGE_WORK_ROOT</span></td></tr>
+    <tr><td><code>list_dir</code></td><td><span class="zh">列目录，供规划端探索结构</span><span class="en">List a directory for the planning side</span></td></tr>
+  </table>
+  </div>
+</section>
+
+<section id="security">
+  <div class="sec-no">03 · SECURITY</div>
+  <h2><span class="zh">安全警告——<em>务必读完再用</em></span><span class="en">Security warning — read before use</span></h2>
+  <div class="secbox" style="margin-top:22px">
+    <b class="hl">⚠ DANGEROUS FLAGS INSIDE</b>
+    <p><span class="zh">两个执行工具运行时带 --dangerously-bypass-approvals-and-sandbox（Codex）与 --dangerously-skip-permissions（Claude Code）。含义很直接：</span>
+    <span class="en">Both executors run with --dangerously-bypass-approvals-and-sandbox (Codex) and --dangerously-skip-permissions (Claude Code). Meaning:</span>
+    <b style="color:var(--ink)"><span class="zh">谁能连到端点，谁就能在你的电脑上跑任意命令、改任意文件。</span><span class="en">whoever reaches the endpoint can run any command and touch any file on your machine.</span></b></p>
+    <ul>
+      <li>🔒 <b><span class="zh">绝不裸奔公网</span><span class="en">Never expose it raw</span></b><span class="zh">：至少用 BRIDGE_PATH_SECRET（不可猜密钥 URL），有条件再叠 BRIDGE_TOKEN。</span><span class="en">: at minimum BRIDGE_PATH_SECRET (an unguessable capability URL), ideally plus BRIDGE_TOKEN.</span></li>
+      <li>🚫 <b><span class="zh">绝不分享你的端点地址</span><span class="en">Never share your endpoint</span></b><span class="zh">——那等于把你电脑的钥匙发出去。分享请让对方自建。</span><span class="en">— that's handing over your keys. Share the repo, not the URL.</span></li>
+      <li>📁 <b>BRIDGE_WORK_ROOT</b><span class="zh"> 把可读写范围锁在一个目录里，别放任整个 $HOME。</span><span class="en"> confines read/write to one directory — never all of $HOME.</span></li>
+      <li>🔐 <b>.env</b><span class="zh"> 有密钥，已被 .gitignore 排除——永远不要提交它。</span><span class="en"> holds secrets and is gitignored — never commit it.</span></li>
+    </ul>
+    <p style="margin-top:12px"><span class="zh">这是个人效率工具，不是多人生产服务。请自担风险。</span><span class="en">A personal productivity tool, not a multi-user service. Use at your own risk.</span></p>
+  </div>
+</section>
+
+<section id="start">
+  <div class="sec-no">04 · QUICK START</div>
+  <h2><span class="zh">五步跑通</span><span class="en">Five steps to live</span></h2>
+  <div class="steps" style="margin-top:22px">
+    <div class="step"><i>STEP 1</i><div><p><span class="zh">克隆 + 装依赖（Python 3.10+，mcp[cli] + uvicorn）</span><span class="en">Clone + install (Python 3.10+, mcp[cli] + uvicorn)</span></p></div></div>
+    <div class="step"><i>STEP 2</i><div><p><span class="zh">配置 .env：生成纯 hex 的 <code>BRIDGE_PATH_SECRET</code>；<code>CODEX_BIN</code>/<code>CLAUDE_BIN</code> 指向真身二进制（shell 里的 codex/claude 常是函数包装，用 <code>which</code> 找真身）</span><span class="en">Configure .env: pure-hex BRIDGE_PATH_SECRET; point CODEX_BIN/CLAUDE_BIN at the real binaries (shell wrappers won't work)</span></p></div></div>
+    <div class="step"><i>STEP 3</i><div><p><span class="zh">起 server：<code>python -m app.bridge_server --http</code>（监听 127.0.0.1:8000）</span><span class="en">Start the server: python -m app.bridge_server --http (127.0.0.1:8000)</span></p></div></div>
+    <div class="step"><i>STEP 4</i><div><p><span class="zh">起隧道：<code>cloudflared tunnel --protocol http2 --url http://localhost:8000</code>（http2 是必须的，默认 QUIC 过夜会失活）</span><span class="en">Start the tunnel with --protocol http2 (QUIC default dies overnight)</span></p></div></div>
+    <div class="step"><i>STEP 5</i><div><p><span class="zh">ChatGPT → Settings → Connectors → 开发者模式 → 添加 <code>https://xxx.trycloudflare.com/mcp/&lt;密钥&gt;</code></span><span class="en">ChatGPT → Settings → Connectors → Developer mode → add the secret URL</span></p></div></div>
+  </div>
+</section>
+
+<section id="pitfalls">
+  <div class="sec-no">05 · PITFALLS</div>
+  <h2><span class="zh">踩坑速查——<em>都是真踩过的</em></span><span class="en">Pitfalls — all really hit</span></h2>
+  <div style="margin-top:22px">
+  <table class="tbl">
+    <tr><th style="width:44%"><span class="zh">现象</span><span class="en">Symptom</span></th><th><span class="zh">原因 / 解法</span><span class="en">Cause / fix</span></th></tr>
+    <tr><td><code>run_codex</code> <span class="zh">报</span><span class="en">fails with</span> <code>exit=-6</code> + dyld <code>libllhttp.x.dylib not loaded</code></td><td>Homebrew <span class="zh">升级拽断了 node 的 llhttp 依赖 →</span><span class="en">upgrade broke node's llhttp →</span> <code>brew reinstall node</code></td></tr>
+    <tr><td>ChatGPT <span class="zh">声称「被安全检查拦截」但其实没真调</span><span class="en">claims it was "blocked" without calling anything</span></td><td><span class="zh">没真发工具调用，自己脑补借口 → 措辞强制点名工具 + 要求原样回贴返回</span><span class="en">It never sent the call → force name the tool + demand verbatim output echo</span></td></tr>
+    <tr><td><span class="zh">隧道过夜失活，报</span><span class="en">Tunnel dies overnight with</span> <code>quic: timeout</code></td><td>quick tunnel <span class="zh">默认 QUIC/UDP → 必须加</span><span class="en">defaults to QUIC → must add</span> <code>--protocol http2</code></td></tr>
+    <tr><td>ChatGPT <span class="zh">访问端点</span><span class="en">gets</span> 404</td><td><span class="zh">密钥路径含</span><span class="en">secret path contains</span> <code>_</code>/<code>-</code> <span class="zh">被 URL 规范化吞掉 →</span><span class="en">normalized away →</span> <span class="zh">必须纯 hex（</span><span class="en">pure hex via </span><code>secrets.token_hex</code>）</td></tr>
+    <tr><td><span class="zh">调本地 codex/claude 没反应</span><span class="en">Local codex/claude doesn't respond</span></td><td><span class="zh">shell 里是带审批音效的函数包装 → .env 指向真身二进制</span><span class="en">shell wrappers with approval hooks → point .env at real binaries</span></td></tr>
+    <tr><td>trycloudflare <span class="zh">地址重启就变</span><span class="en">address changes on restart</span></td><td>quick tunnel <span class="zh">是临时的 → 配命名隧道绑自己域名</span><span class="en">is ephemeral → use a named tunnel with your domain</span></td></tr>
+  </table>
+  </div>
+</section>
+
+<section id="why">
+  <div class="sec-no">06 · FAQ</div>
+  <h2><span class="zh">常见问题 · 四问速览</span><span class="en">FAQ · The four questions</span></h2>
+  <div class="faq" style="margin-top:22px">
+    <details class="faq-item" open>
+      <summary><span class="qm">Q.1</span><span class="qt"><span class="zh">解决什么问题？</span><span class="en">What problem does it solve?</span></span><span class="qc">＋</span></summary>
+      <div class="qa"><span class="zh">三个 AI 各关在各的盒子里：ChatGPT 会想但碰不到你的电脑；本地 AI 能动手但规划弱。以前靠人肉中转（复制粘贴），这座桥把中转自动化——ChatGPT 直接派活，结果自动回传。</span><span class="en">Each AI is boxed: ChatGPT plans but can't touch your machine; local AIs execute but plan worse. The bridge automates the human relay between them.</span></div>
+    </details>
+    <details class="faq-item">
+      <summary><span class="qm">Q.2</span><span class="qt"><span class="zh">什么场景用？得到什么结果？</span><span class="en">Scenario and outcome?</span></span><span class="qc">＋</span></summary>
+      <div class="qa"><span class="zh">在 ChatGPT 里说「写个三步计划，再让 Codex 审一遍」：Claude Code 真在你硬盘上生成文件，Codex 真读了文件写下审查意见，结果回到对话里。全程只在 ChatGPT 打字。</span><span class="en">Say "draft a 3-step plan, have Codex review it": files really appear on disk, Codex really reads and reviews, results land back in the chat. You only ever type in ChatGPT.</span></div>
+    </details>
+    <details class="faq-item">
+      <summary><span class="qm">Q.3</span><span class="qt"><span class="zh">内部是什么结构？</span><span class="en">How is it structured?</span></span><span class="qc">＋</span></summary>
+      <div class="qa"><span class="zh">四个关键招数：① ChatGPT 开发者模式（MCP 入口）；② 本地 FastMCP 桥（一套代码 stdio/--http 两用）；③ Cloudflare Tunnel（不裸奔公网）；④ 密钥路径认证（capability URL——开发者模式发不了自定义请求头，Bearer Token 用不了，改用 /mcp/&lt;hex密钥&gt;）。</span><span class="en">Four moves: ChatGPT developer mode (MCP entry); a local FastMCP bridge (stdio/--http dual mode); Cloudflare Tunnel; capability-URL auth (developer mode can't send custom headers, so Bearer is out).</span></div>
+    </details>
+    <details class="faq-item">
+      <summary><span class="qm">Q.4</span><span class="qt"><span class="zh">能复用什么？</span><span class="en">What can you reuse?</span></span><span class="qc">＋</span></summary>
+      <div class="qa"><span class="zh">① FastMCP 桥模式（stdio/--http 一套代码两用）可直接抄；② capability-URL 认证适用于一切「云端只能发 GET 式 connector」的场景；③ 六条踩坑速查能帮任何走 Cloudflare Tunnel + MCP 路线的人省一晚上。MIT。</span><span class="en">The FastMCP dual-mode bridge, capability-URL auth for header-less connectors, and six hard-won tunnel/MCP pitfalls. MIT.</span></div>
+    </details>
+  </div>
+</section>
+
+<footer><div class="fm">
+  <div><b style="color:var(--ink2)">chatgpt-codex-claude-bridge</b> · <span class="zh">个人效率工具 · MIT</span><span class="en">personal productivity tool · MIT</span></div>
+  <div><span class="zh">流程、坑与安全声明逐项对照仓库 README（Observed）</span><span class="en">Flow, pitfalls and warnings verified against the repo README (Observed)</span></div>
+</div></footer>
+</div>
+
+<script>
+const lang=()=>document.documentElement.dataset.lang;
+function setLang(l){document.documentElement.dataset.lang=l;localStorage.setItem("br-lang",l);
+ document.getElementById("lang-zh").classList.toggle("on",l==="zh");
+ document.getElementById("lang-en").classList.toggle("on",l==="en");}
+function setTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem("br-theme",t);
+ document.getElementById("th-light").classList.toggle("on",t==="light");
+ document.getElementById("th-dark").classList.toggle("on",t==="dark");}
+(function boot(){
+ const q=new URLSearchParams(location.search);
+ setTheme(q.get("theme")||localStorage.getItem("br-theme")||"light");
+ setLang(q.get("lang")||localStorage.getItem("br-lang")||(navigator.language.startsWith("zh")?"zh":"en"));
+})();
+</script>
+</body>
+</html>

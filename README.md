@@ -6,13 +6,21 @@
 
 *ChatGPT 负责想，你的电脑负责动手。*
 
+**展示页**：https://78tyih.github.io/chatgpt-codex-claude-bridge/showcase.html （含数据流图解）
+
 </div>
 
 ---
 
-## 这是什么？
+| | |
+|---|---|
+| 类型 | 个人效率工具（FastMCP 桥 + Cloudflare Tunnel） |
+| 状态 | 本人日常在用 · MIT |
+| 前提 | 本机已能跑通 Codex CLI / Claude Code；有 Cloudflare 账号 |
 
-平时这三个 AI 各自关在自己的盒子里：
+## ① 解决什么问题
+
+三个 AI 各自关在盒子里：
 
 | AI | 强项 | 短板 |
 |---|---|---|
@@ -20,13 +28,21 @@
 | **Claude Code**（本地） | 真改文件、真跑命令、执行落地 | 规划不如 ChatGPT |
 | **Codex**（本地） | 真改文件、真跑命令、代码审查 | 规划不如 ChatGPT |
 
-以前你得当**人肉中转**：在 ChatGPT 里问完方案，复制出来，再粘到终端里让本地 AI 执行。
+以前你得当**人肉中转**：在 ChatGPT 里问完方案，复制出来，再粘到终端里让本地 AI 执行。**这个项目把中转环节自动化了**——ChatGPT 自己就能把活派到你电脑上，结果自动跑完回传到对话里。
 
-**这个项目把中转环节自动化了**——ChatGPT 自己就能把活派到你电脑上，结果自动跑完回传到对话里。你全程只在 ChatGPT 里打字。
+## ② 什么场景 → 什么结果
 
-## 数据怎么流的
+你在 ChatGPT 里打一句"帮我写个三步计划，再让 Codex 审一遍"，然后：
 
-```
+1. ChatGPT 把"写计划"派给本地 **Claude Code** → 真的在你硬盘上生成了文件；
+2. 再把"审查"派给本地 **Codex** → Codex 真的读了文件、写下审查意见；
+3. 结果回到 ChatGPT 对话里给你看。
+
+全程你只在 ChatGPT 里打字，电脑那头自动完成。三个角色像一个小团队：**ChatGPT = 项目经理｜Claude Code = 干活的工程师｜Codex = 审查的同事**。
+
+## ③ 什么结构
+
+```text
    你在 ChatGPT 里说一句话
         │
         ▼
@@ -48,18 +64,30 @@
    结果原路返回，显示在 ChatGPT 对话里
 ```
 
-**三个角色像一个小团队：** ChatGPT = 项目经理（想方案、派活）｜Claude Code = 干活的工程师｜Codex = 审查的同事。
+**工作原理（关键招数）：**
 
-## 它能干嘛（实例）
+1. **ChatGPT 开发者模式**：允许连接外部 MCP 工具，这是入口钥匙。
+2. **本地 MCP 桥**：`app/bridge_server.py`，基于 FastMCP。听懂 ChatGPT 的指令，转头调本地 Codex / Claude Code 真身二进制。一套代码两用——`stdio` 给本地客户端，`--http` 给隧道。
+3. **加密隧道**：Cloudflare Tunnel 把本地 server 安全暴露成 HTTPS，不用把电脑挂公网。
+4. **认证靠密钥 URL**：开发者模式的 connector 发不了自定义请求头，Bearer Token 用不了——改用**密钥路径**（capability URL）：端点从 `/mcp` 改成 `/mcp/<不可猜的hex密钥>`，裸访问 `/mcp` 直接 404。
 
-你在 ChatGPT 里打一句"帮我写个三步计划，再让 Codex 审一遍"，然后：
+**暴露的工具：**
 
-1. ChatGPT 把"写计划"派给本地 **Claude Code** → 真的在你硬盘上生成了文件；
-2. 再把"审查"派给本地 **Codex** → Codex 真的读了文件、写下审查意见；
-3. 结果回到 ChatGPT 对话里给你看。
+| 工具 | 作用 |
+|---|---|
+| `run_codex` | 把任务交给本地 Codex 跑（执行 / 审查） |
+| `run_claude_code` | 把任务交给本地 Claude Code 跑（执行落地） |
+| `read_file` | 读 `BRIDGE_WORK_ROOT` 内的文件 |
+| `write_file` | 写文件到 `BRIDGE_WORK_ROOT` 内 |
+| `list_dir` | 列目录，供规划端探索结构 |
 
-全程你只在 ChatGPT 里打字，电脑那头自动完成。
-</content>
+## ④ 能复用什么
+
+- **FastMCP 双模式桥模式**（stdio / --http 一套代码两用）——任何「云端规划端 + 本地执行端」架构都能直接抄
+- **capability-URL 认证**——适用于一切 connector 发不了自定义头的场景
+- **六条踩坑速查**（见下）——走 Cloudflare Tunnel + MCP 路线的人都能省一晚上
+
+MIT。
 
 ---
 
@@ -78,30 +106,11 @@
 
 这是个人效率工具，不是给多人用的生产服务。请自担风险。
 
-## 工作原理（关键招数）
-
-1. **ChatGPT 开发者模式**：ChatGPT 有个"开发者模式"，允许它连接外部 MCP 工具。这是入口钥匙。
-2. **本地 MCP 桥**：`app/bridge_server.py`，基于 [FastMCP](https://github.com/modelcontextprotocol)。它听懂 ChatGPT 的指令，转头去调本地的 Codex / Claude Code 真身二进制。一套代码两用——`stdio` 给本地客户端，`--http` 给隧道。
-3. **加密隧道**：用 [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) 把本地 server 安全暴露成 HTTPS，云端的 ChatGPT 不用你把电脑直接挂公网就能够到。
-4. **认证靠密钥 URL**：ChatGPT Plus 开发者模式的 connector 只支持"无验证 / OAuth"，发不了自定义请求头——所以 Bearer Token 它用不了。改用**密钥路径**（capability URL）：端点从 `/mcp` 改成 `/mcp/<不可猜的hex密钥>`，裸访问 `/mcp` 直接 404。
-
-## 暴露的工具
-
-| 工具 | 作用 |
-|---|---|
-| `run_codex` | 把任务交给本地 Codex 跑（执行 / 审查） |
-| `run_claude_code` | 把任务交给本地 Claude Code 跑（执行落地） |
-| `read_file` | 读 `BRIDGE_WORK_ROOT` 内的文件 |
-| `write_file` | 写文件到 `BRIDGE_WORK_ROOT` 内 |
-| `list_dir` | 列目录，供规划端探索结构 |
-
 ## 快速开始
-
-**前提**：本机已装好 Codex CLI 和 / 或 Claude Code，能在终端跑通；有 [Cloudflare 账号](https://dash.cloudflare.com)。
 
 ```bash
 # 1) 克隆 + 装依赖
-git clone https://github.com/<你的用户名>/chatgpt-codex-claude-bridge.git
+git clone https://github.com/78tyih/chatgpt-codex-claude-bridge.git
 cd chatgpt-codex-claude-bridge
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -134,7 +143,7 @@ cloudflared tunnel --protocol http2 --url http://localhost:8000
 | 隧道过夜失活，报 `quic: timeout` | cloudflared quick tunnel 默认走 QUIC/UDP。**必须加 `--protocol http2`**。 |
 | ChatGPT 访问端点 404 | 密钥路径里若含 `_` / `-` 等特殊字符会被 URL 规范化吞掉。`BRIDGE_PATH_SECRET` **必须用纯 hex**（`secrets.token_hex`）。 |
 | 调本地 codex/claude 没反应 | shell 里的 `codex` / `claude` 常是带审批音效的函数包装，非交互 shell 调不动。`.env` 里的 `CODEX_BIN` / `CLAUDE_BIN` 要指向**真身二进制**。 |
-| trycloudflare 地址重启就变 | quick tunnel 是临时的。要固定地址，配 **命名隧道**（[Cloudflare Tunnel 文档](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)）绑你自己的域名。 |
+| trycloudflare 地址重启就变 | quick tunnel 是临时的。要固定地址，配**命名隧道**（Cloudflare Tunnel 文档）绑你自己的域名。 |
 
 ## 环境
 

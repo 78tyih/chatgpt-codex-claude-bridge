@@ -1,0 +1,27 @@
+{
+  "slug": "chatgpt-codex-claude-bridge",
+  "name": "ChatGPT × Codex × Claude Bridge",
+  "oneLiner": {
+    "zh": "让网页版 ChatGPT 隔空指挥你电脑上的 Codex 和 Claude Code：ChatGPT 负责想，你的电脑负责动手，中转全自动。",
+    "en": "Let web ChatGPT remote-control local Codex and Claude Code: ChatGPT plans, your machine executes."
+  },
+  "type": "personal productivity tool (FastMCP bridge + Cloudflare Tunnel)",
+  "status": "working personal tool (MIT)",
+  "repo": "https://github.com/78tyih/chatgpt-codex-claude-bridge",
+  "showcase": "https://78tyih.github.io/chatgpt-codex-claude-bridge/showcase.html",
+  "fourQuestions": {
+    "problem": "三个 AI 各关各的盒子：ChatGPT 会想碰不到本机，本地 AI 能动手规划弱，中间靠人肉复制粘贴中转。",
+    "scenarioOutcome": "在 ChatGPT 里一句话派活 → Claude Code 真在本机生成文件 → Codex 真读文件写审查 → 结果原路回传对话。全程只打字，不碰终端。",
+    "architecture": "ChatGPT 开发者模式（MCP 入口）→ Cloudflare Tunnel（HTTPS http2）→ app/bridge_server.py（FastMCP，stdio/--http 一套代码两用）→ 调本地 Codex/Claude Code 真身二进制；认证用 capability URL（/mcp/<hex密钥>），因开发者模式发不了自定义请求头。",
+    "reuse": "① FastMCP 双模式桥模式；② capability-URL 认证（适用于一切无自定义头的 connector 场景）；③ 六条 Tunnel+MCP 真踩坑。MIT。"
+  },
+  "tools": ["run_codex", "run_claude_code", "read_file", "write_file", "list_dir"],
+  "security": {
+    "flags": ["--dangerously-bypass-approvals-and-sandbox (Codex)", "--dangerously-skip-permissions (Claude Code)"],
+    "rules": ["绝不裸奔公网：至少 BRIDGE_PATH_SECRET（纯 hex），可叠 BRIDGE_TOKEN", "绝不分享端点地址（等于交出电脑钥匙）", "用 BRIDGE_WORK_ROOT 锁定读写范围", ".env 永不提交"],
+    "stance": "个人效率工具，非多人生产服务，自担风险"
+  },
+  "links": {
+    "source": ["app/bridge_server.py", "README.md（含六条踩坑速查）"]
+  }
+}
